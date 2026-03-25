@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Temple Prayer Queue</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 20px; }
+    h1 { text-align: center; }
+    form { max-width: 400px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+    input, textarea, button { width: 100%; padding: 10px; margin: 10px 0; border-radius: 4px; border: 1px solid #ccc; }
+    button { background: #007bff; color: #fff; border: none; cursor: pointer; }
+    button:hover { background: #0056b3; }
+    #result { margin-top: 20px; text-align: center; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+<h1>Temple Prayer Queue</h1>
+
+<form id="queueForm">
+  <input type="text" id="name" placeholder="Your Name" required>
+  <input type="tel" id="phone" placeholder="Phone Number" required>
+  <textarea id="remarks" placeholder="Remarks (optional)"></textarea>
+  <button type="submit">Submit</button>
+</form>
+
+<div id="result"></div>
+
+<script>
+  const form = document.getElementById('queueForm');
+  const resultDiv = document.getElementById('result');
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    if (!navigator.geolocation) {
+      resultDiv.textContent = 'Geolocation is not supported by your browser';
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(position => {
+      const data = {
+        name: document.getElementById('name').value,
+        phone: document.getElementById('phone').value,
+        remarks: document.getElementById('remarks').value,
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude
+      };
+
+      fetch("https://script.google.com/macros/s/AKfycbw9rf1K01GfPGrwhjNDxudV9wt8GdUBbxPeV-trs4-mDJo7dWcgebpDndXnv6wfaudW/exec", {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: {"Content-Type": "application/json"}
+      })
+      .then(response => response.json())
+      .then(data => {
+        if(data.success) {
+          resultDiv.innerHTML = `✅ Your queue number: <strong>${data.queueNumber}</strong><br>Current ongoing number: <strong>${data.currentNumber}</strong>`;
+          form.reset();
+        } else {
+          resultDiv.textContent = '❌ Submission failed: ' + (data.message || 'Unknown error');
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        resultDiv.textContent = '❌ Error sending data';
+      });
+
+    }, () => {
+      resultDiv.textContent = '❌ Unable to get your location';
+    });
+  });
+</script>
+
+</body>
+</html>
